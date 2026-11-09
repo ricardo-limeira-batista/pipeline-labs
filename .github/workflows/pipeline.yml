@@ -1,9 +1,9 @@
-name: "Estrutura de Diretórios e Arquivos"
+name: "Action com schedule"
 
 on:
   schedule:
     # executa às 21:55 horário Brasília UTC0
-    - cron: '10 21 * * *'
+    - cron: '12 21 * * *'
   workflow_dispatch:
 
 env:
