@@ -3,7 +3,7 @@ name: "Estrutura de Diretórios e Arquivos"
 on:
   schedule:
     # executa às 21:55 horário Brasília UTC0
-    - cron: '55 00 * * *'
+    - cron: '33 20 * * *'
   workflow_dispatch:
 
 env:
