@@ -3,7 +3,7 @@ name: "Estrutura de Diretórios e Arquivos"
 on:
   schedule:
     # executa às 21:55 horário Brasília UTC0
-    - cron: '45 20 * * *'
+    - cron: '48 20 * * *'
   workflow_dispatch:
 
 env:
@@ -13,7 +13,7 @@ jobs:
   scheduled-job:
     runs-on: ubuntu-latest
 
-    steps:+
+    steps:
     - name: Checkout do Código
       uses: actions/checkout@v4
     - name: Informações do Schedule
