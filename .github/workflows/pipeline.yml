@@ -3,7 +3,7 @@ name: "Estrutura de Diretórios e Arquivos"
 on:
   schedule:
     # executa às 21:55 horário Brasília UTC0
-    - cron: '48 20 * * *'
+    - cron: '51 20 * * *'
   workflow_dispatch:
 
 env:
@@ -16,12 +16,14 @@ jobs:
     steps:
     - name: Checkout do Código
       uses: actions/checkout@v4
+
     - name: Informações do Schedule
       run: |
         echo "Workflow disparado por SCHEDULE"s
         echo "Data atual: $(date)"
         echo "Hora UTC: $(date -w)"
         echo "Timezone: $(date +%Z)"
+
     - name: Relatório diário automatizado
       run: |
         echo "RELATÓRIO DIÁRIO AUTOMATIZADO"
