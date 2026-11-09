@@ -3,7 +3,7 @@ name: "Action com schedule"
 on:
   schedule:
     # executa às 21:55 horário Brasília UTC0
-    - cron: '44 21 * * *'
+    - cron: '47 21 * * *'
   workflow_dispatch:
 
 env:
