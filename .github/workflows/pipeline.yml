@@ -1,6 +1,13 @@
-name: "Action com schedule"
+name: "Push Trigger Workflow"
 
 on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - README.md
   schedule:
     # executa às 21:55 horário Brasília UTC0
     - cron: '47 21 * * *'
@@ -10,7 +17,7 @@ env:
   NODE_VERSION: '18'
 
 jobs:
-  scheduled-job:
+  push-job:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do Código
@@ -18,19 +25,19 @@ jobs:
         with:
           fetch-depth: 0 # Necessário para o git rev-list / shortlog funcionarem bem
 
-      - name: Informações do Schedule
+      - name: Informações do Push
         run: |
-          echo "Workflow disparado por SCHEDULE"
-          echo "Data atual: $(date)"
-          echo "Hora UTC: $(date -u)"
-          echo "Timezone: $(date +%Z)"
+          echo "Workflow disparado por PUSH"
+          echo "Commit: ${{ github.sha }}"
+          echo "Autor: ${{ github.actor }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Repositório: ${{ github.repository }}"
 
-      - name: Relatório diário automatizado
+
+      - name: Listar arquivos modificados
         run: |
-          echo "RELATÓRIO DIÁRIO AUTOMATIZADO"
+          echo "Arquivos no repositório"
           echo "========================================="
-          echo "Total de commits: $(git rev-list --all --count)"
-          echo "Contribuidores únicos: $(git shortlog -sn | wc -l)"
-          echo "Último commit: $(git log -n 1 --pretty=format:'%h - %s (%an, %ar)')"
+          ls-la
 
 
