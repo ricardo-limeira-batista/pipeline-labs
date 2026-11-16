@@ -24,7 +24,7 @@ jobs:
           echo "Issue: ${{ github.event.issue.number }}"
           echo "Título: ${{ github.event.issue.title }}"
           echo "Autor: ${{ github.event.issue.user.login }}"
-          echo "Labels: ${{ join(github.event.issue.lables.*name, ', ') }}"
+          echo "Labels: ${{ join(github.event.issue.lables.*.name, ', ') }}"
 
 
       - name: Resposta automática (nova issue)
