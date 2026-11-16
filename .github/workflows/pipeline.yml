@@ -6,17 +6,12 @@ permissions:
 # Executa quando issues são criadas, editadas ou fechadas.
 on:
   issues:
-    types: [opened, edited, closed labeled]
+    types: [opened, edited, closed, labeled]
 
 jobs:
   push-job:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout do Código
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0 # Necessário para o git rev-list / shortlog funcionarem bem
-
       - name: Informações da Issue
         run: |
           echo "Workflow disparado por ISSUE"
@@ -24,7 +19,7 @@ jobs:
           echo "Issue: ${{ github.event.issue.number }}"
           echo "Título: ${{ github.event.issue.title }}"
           echo "Autor: ${{ github.event.issue.user.login }}"
-          echo "Labels: ${{ join(github.event.issue.lables.*.name, ', ') }}"
+          echo "Labels: ${{ join(github.event.issue.labels.*.name, ', ') }}"
 
 
       - name: Resposta automática (nova issue)
