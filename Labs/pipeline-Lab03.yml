@@ -1,0 +1,43 @@
+name: "Push Trigger Workflow"
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'src/**'
+      - README.md
+  schedule:
+    # executa às 21:55 horário Brasília UTC0
+    - cron: '47 21 * * *'
+  workflow_dispatch:
+
+env:
+  NODE_VERSION: '18'
+
+jobs:
+  push-job:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do Código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Necessário para o git rev-list / shortlog funcionarem bem
+
+      - name: Informações do Push
+        run: |
+          echo "Workflow disparado por PUSH"
+          echo "Commit: ${{ github.sha }}"
+          echo "Autor: ${{ github.actor }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Repositório: ${{ github.repository }}"
+
+
+      - name: Listar arquivos modificados
+        run: |
+          echo "Arquivos no repositório"
+          echo "========================================="
+          ls -la
+
+
