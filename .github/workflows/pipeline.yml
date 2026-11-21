@@ -101,21 +101,15 @@ jobs:
       # Função startsWith() - Verifica início da string
       - name: Ação apenas para feature branches
         if: startsWith(github.ref, 'refs/heads/feature/')
-        env:
-          BRANCH_NAME: ${{ github.ref_name }}
-        run: echo "Branch de feature detectado: $BRANCH_NAME"
-
+        run: echo "Branch de feature detectado: ${{ github.ref_name }}"
 
       # Função endsWith() - Verifica fim da string
       - name: Verificar se commit termina com número
-        env:
-          ENDS_WITH_ZERO: ${{ endsWith(github.sha, '0') }}
-          COMMIT_SHA: ${{ github.sha }}
         run: |
-          if [[ "$ENDS_WITH_ZERO" == "true" ]]; then
+          if [[ "${{ endsWith(github.sha, '0') }}" == "true" ]]; then
             echo "SHA termina com zero!"
           else
-            echo "SHA: $COMMIT_SHA"
+            echo "SHA: ${{ github.sha }}"
           fi
 
       # Função format() - Formata strings dinamicamente
