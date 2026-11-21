@@ -6,7 +6,6 @@ on:
       - main
       - develop
       - 'feature/**'
-      - 'teste_PR'
   pull_request:
   workflow_dispatch:
 
