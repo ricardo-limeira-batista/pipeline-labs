@@ -108,11 +108,14 @@ jobs:
 
       # Função endsWith() - Verifica fim da string
       - name: Verificar se commit termina com número
+        env:
+          ENDS_WITH_ZERO: ${{ endsWith(github.sha, '0') }}
+          COMMIT_SHA: ${{ github.sha }}
         run: |
-          if [[ "${{ endsWith(github.sha, '0') }}" == "true" ]]; then
+          if [[ "$ENDS_WITH_ZERO" == "true" ]]; then
             echo "SHA termina com zero!"
           else
-            echo "SHA: ${{ github.sha }}"
+            echo "SHA: $COMMIT_SHA"
           fi
 
       # Função format() - Formata strings dinamicamente
