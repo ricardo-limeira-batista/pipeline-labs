@@ -1,67 +1,205 @@
-name: Demonstração de Variáveis de Ambiente
+name: Contextos e Expressões
 
 on:
   push:
     branches:
       - main
+      - develop
+      - 'feature/**'
+  pull_request:
   workflow_dispatch:
 
-# Variáveis de ambiente no nível do WORKFLOW
-env:
-  WORKFLOW_VAR: "Variável definida no nível do workflow"
-  AMBIENTE: "producao"
-  VERSAO_APP: "1.0.0"
-
 jobs:
-  demonstracao-variaveis:
+  # Job 1: Demonstra contextos github e runner
+  info-contexto:
     runs-on: ubuntu-latest
-
-    # Variáveis de ambiente no nível do JOB
-    env:
-      JOB_VAR: "Variável definida no nível do job"
-      USUARIO: "devops-user"
-
     steps:
-      - name: Exibir variáveis do workflow
-        run: |
-          echo "=== Variáveis do Workflow ==="
-          echo "Variável WORKFLOW_VAR: ${{ env.WORKFLOW_VAR }}"
-          echo "Ambiente: ${{ env.AMBIENTE }}"
-          echo "Versão da aplicação: ${{ env.VERSAO_APP }}"
+      - name: Checkout código
+        uses: actions/checkout@v4
 
-      - name: Exibir variáveis do job
+      # Contexto GITHUB - Informações do repositório e evento
+      - name: Exibir contexto GitHub
         run: |
-          echo "=== Variáveis do Job ==="
-          echo "Variável JOB_VAR: ${{ env.JOB_VAR }}"
-          echo "Usuário: ${{ env.USUARIO }}"
+          echo "Repositório: ${{ github.repository }}"
+          echo "Ator que disparou: ${{ github.actor }}"
+          echo "Branch/Ref: ${{ github.ref }}"
+          echo "Nome do branch: ${{ github.ref_name }}"
+          echo "Evento: ${{ github.event_name }}"
+          echo "SHA do commit: ${{ github.sha }}"
+          echo "Mensagem do commit: ${{ github.event.head_commit.message }}"
 
-      - name: Exibir variável do step
-        env:
-          STEP_VAR: "Variável definida no nível do step"
-          MENSAGEM: "Este é um exemplo prático!"
+      # Contexto RUNNER - Informações do ambiente de execução
+      - name: Exibir contexto Runner
         run: |
-          echo "=== Variáveis do Step ==="
-          echo "Variável STEP_VAR: ${{ env.STEP_VAR }}"
-          echo "Mensagem: ${{ env.MENSAGEM }}"
+          echo "Sistema Operacional: ${{ runner.os }}"
+          echo "Arquitetura: ${{ runner.arch }}"
+          echo "Nome do runner: ${{ runner.name }}"
+          echo "Diretório temporário: ${{ runner.temp }}"
+          echo "Diretório de ferramentas: ${{ runner.tool_cache }}"
 
-      - name: Combinar variáveis de diferentes níveis
-        env:
-          STEP_ESPECIFICO: "step-value"
-        run: |
-          echo "=== Combinação de Variáveis ==="
-          echo "Workflow: ${{ env.WORKFLOW_VAR }}"
-          echo "Job: ${{ env.JOB_VAR }}"
-          echo "Step: ${{ env.STEP_ESPECIFICO }}"
-          echo "Todas acessíveis no mesmo contexto!"
+      # Dump completo dos contextos para debug
+      - name: Debug - Dump contexto GitHub completo
+        run: echo '${{ toJSON(github) }}'
 
-      - name: Usar variáveis em comandos práticos
-        env:
-          NOME_PROJETO: "lab-variaveis"
-          TIMESTAMP: "2025-01-13"
+      - name: Debug - Dump contexto Runner completo
+        run: echo '${{ toJSON(runner) }}'
+
+  # Job 2: Demonstra outputs de steps e referências entre steps
+  outputs-entre-steps:
+    runs-on: ubuntu-latest
+    outputs:
+      # Exporta output para outros jobs usarem
+      versao: ${{ steps.gerar-versao.outputs.version }}
+      ambiente: ${{ steps.definir-ambiente.outputs.env_name }}
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # Step que GERA um output
+      - name: Gerar versão
+        id: gerar-versao
         run: |
-          echo "=== Exemplo Prático ==="
-          echo "Compilando projeto: ${{ env.NOME_PROJETO }}"
-          echo "Data de build: ${{ env.TIMESTAMP }}"
-          echo "Ambiente de deploy: ${{ env.AMBIENTE }}"
-          echo "Versão: ${{ env.VERSAO_APP }}"
-          echo "Versão: ${{ env.TIMESTAMP }}"
+          VERSION="1.0.${{ github.run_number }}"
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Versão gerada: $VERSION"
+
+      # Step que GERA outro output
+      - name: Definir ambiente baseado no branch
+        id: definir-ambiente
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            ENV_NAME="production"
+          elif [[ "${{ github.ref }}" == "refs/heads/develop" ]]; then
+            ENV_NAME="staging"
+          else
+            ENV_NAME="development"
+          fi
+          echo "env_name=$ENV_NAME" >> $GITHUB_OUTPUT
+          echo "Ambiente definido: $ENV_NAME"
+
+      # Step que USA outputs de steps anteriores
+      - name: Usar outputs dos steps anteriores
+        run: |
+          echo "Usando versão: ${{ steps.gerar-versao.outputs.version }}"
+          echo "Usando ambiente: ${{ steps.definir-ambiente.outputs.env_name }}"
+          echo "Tag completa: ${{ steps.definir-ambiente.outputs.env_name }}-v${{ steps.gerar-versao.outputs.version }}"
+
+  # Job 3: Demonstra expressões e funções
+  expressoes-e-funcoes:
+    runs-on: ubuntu-latest
+    # Usa output do job anterior
+    needs: outputs-entre-steps
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      # Função contains() - Verifica se string contém texto
+      - name: Verificar se é hotfix
+        if: contains(github.ref, 'hotfix')
+        run: echo "Este é um branch de HOTFIX - processo especial ativado!"
+
+      # Função startsWith() - Verifica início da string
+      - name: Ação apenas para feature branches
+        if: startsWith(github.ref, 'refs/heads/feature/')
+        run: echo "Branch de feature detectado: ${{ github.ref_name }}"
+
+      # Função endsWith() - Verifica fim da string
+      - name: Verificar se commit termina com número
+        run: |
+          if [[ "${{ endsWith(github.sha, '0') }}" == "true" ]]; then
+            echo "SHA termina com zero!"
+          else
+            echo "SHA: ${{ github.sha }}"
+          fi
+
+      # Função format() - Formata strings dinamicamente
+      - name: Criar mensagem formatada
+        run: |
+          MESSAGE="${{ format('Deploy da versão {0} para {1} por {2}', needs.outputs-entre-steps.outputs.versao, needs.outputs-entre-steps.outputs.ambiente, github.actor) }}"
+          echo "$MESSAGE"
+
+      # Expressão complexa com múltiplas condições
+      - name: Deploy condicional
+        if: |
+          github.event_name == 'push' &&
+          (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+        run: |
+          echo "Executando deploy automático..."
+          echo "Versão: ${{ needs.outputs-entre-steps.outputs.versao }}"
+          echo "Ambiente: ${{ needs.outputs-entre-steps.outputs.ambiente }}"
+
+  # Job 4: Demonstra contexto JOB e verificação de status
+  verificar-status:
+    runs-on: ubuntu-latest
+    needs: [info-contexto, outputs-entre-steps, expressoes-e-funcoes]
+    if: always() # Sempre executa, mesmo se jobs anteriores falhem
+    steps:
+      - name: Verificar status dos jobs anteriores
+        run: |
+          echo "Status do job atual: ${{ job.status }}"
+          echo "Analisando jobs anteriores..."
+
+          # Verifica resultado do needs
+          if [[ "${{ needs.info-contexto.result }}" == "success" ]]; then
+            echo "info-contexto: SUCESSO"
+          else
+            echo "info-contexto: FALHOU"
+          fi
+
+          if [[ "${{ needs.outputs-entre-steps.result }}" == "success" ]]; then
+            echo "outputs-entre-steps: SUCESSO"
+          else
+            echo "outputs-entre-steps: FALHOU"
+          fi
+
+          if [[ "${{ needs.expressoes-e-funcoes.result }}" == "success" ]]; then
+            echo "expressoes-e-funcoes: SUCESSO"
+          else
+            echo "expressoes-e-funcoes: FALHOU"
+          fi
+
+      # Ação condicional baseada em sucesso de todos os jobs
+      - name: Notificar sucesso total
+        if: |
+          needs.info-contexto.result == 'success' &&
+          needs.outputs-entre-steps.result == 'success' &&
+          needs.expressoes-e-funcoes.result == 'success'
+        run: echo "Todos os jobs executaram com SUCESSO!"
+
+      # Ação condicional se algum job falhou
+      - name: Notificar falha
+        if: |
+          needs.info-contexto.result == 'failure' ||
+          needs.outputs-entre-steps.result == 'failure' ||
+          needs.expressoes-e-funcoes.result == 'failure'
+        run: |
+          echo "Pelo menos um job FALHOU!"
+          echo "Verifique os logs acima para mais detalhes."
+
+  # Job 5: Caso de uso prático - Nomear artefatos dinamicamente
+  criar-artefato-dinamico:
+    runs-on: ubuntu-latest
+    needs: outputs-entre-steps
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Criar arquivo de build simulado
+        run: |
+          mkdir -p build
+          echo "Build info" > build/info.txt
+          echo "Versão: ${{ needs.outputs-entre-steps.outputs.versao }}" >> build/info.txt
+          echo "Ambiente: ${{ needs.outputs-entre-steps.outputs.ambiente }}" >> build/info.txt
+          echo "Branch: ${{ github.ref_name }}" >> build/info.txt
+          echo "Commit: ${{ github.sha }}" >> build/info.txt
+          echo "Actor: ${{ github.actor }}" >> build/info.txt
+          cat build/info.txt
+
+      # Nome do artefato usa expressões para ser dinâmico
+      - name: Upload artefato com nome dinâmico
+        uses: actions/upload-artifact@v4
+        with:
+          # Nome formatado dinamicamente: app-production-v1.0.123-abc1234
+          name: ${{ format('app-{0}-v{1}-{2}', needs.outputs-entre-steps.outputs.ambiente, needs.outputs-entre-steps.outputs.versao, github.sha) }}
+          path: build/
+          retention-days: 5
